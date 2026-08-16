@@ -1,0 +1,11 @@
+name = "oeis_a105751_two_adic_fc"
+version = "0.1.0"
+defaultTargets = ["OeisA105751TwoAdicFC"]
+
+[[require]]
+name = "formal_conjectures"
+git = "https://github.com/google-deepmind/formal-conjectures"
+rev = "638da20efd8eeeed2993fc2550fc596dc90c1ce8"
+
+[[lean_lib]]
+name = "OeisA105751TwoAdicFC"
