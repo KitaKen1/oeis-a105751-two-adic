@@ -1,6 +1,6 @@
-# OEIS A105751: the 2-adic asymptotic target
+# OEIS A105751: the 2-adic asymptotic
 
-This repository is a Lean formalization workspace for the **2-adic asymptotic target**
+This repository contains a Lean proof of the **2-adic asymptotic target**
 registered in
 [Formal Conjectures](https://github.com/google-deepmind/formal-conjectures/blob/main/FormalConjectures/OEIS/105751.lean).
 
@@ -30,12 +30,11 @@ In ordinary notation, it states
 
 ## Status
 
-This repository currently fixes the exact target and the intended theorem boundary.  It is a
-**compiling formalization scaffold**, not yet a completed kernel-checked proof of the conjecture.
-The four residue-class valuation formulas and their implication for the limit remain proof
-obligations.  No file in this repository claims that an imported `sorry` is a proof.
+**Solved locally and checked by Lean.** The proof establishes the four exact residue-class
+valuation formulas and derives the registered limit. The Formal Conjectures version proves the
+target directly; it does not invoke the imported open declaration.
 
-The mathematical route under study gives the stronger formulas, away from the zero terms
+The proof gives the stronger formulas, away from the zero terms
 `a(0) = a(3) = 0`:
 
 ```text
@@ -53,17 +52,17 @@ These imply
 
 which is stronger than the registered limit.
 
-## Formal Conjectures target
+## Formal Conjectures theorem
 
-The file in `lean/` imports the current Formal Conjectures module and defines
-`A105751TwoAdic.formalConjecturesTarget` with exactly the same proposition as
-`OeisA105751.conjecture`:
+The file in `lean/` imports the current Formal Conjectures module and proves the exact proposition
+as `A105751Proof.oeisA105751_conjecture`:
 
 ```lean
-def formalConjecturesTarget : Prop :=
+theorem oeisA105751_conjecture :
   Tendsto
     (fun n ↦ (4 : ℚ) * (padicValInt 2 (OeisA105751.a n) : ℚ) / (n : ℚ))
-    atTop (nhds 1)
+    atTop (nhds 1) := by
+  ...
 ```
 
 The project is pinned to Formal Conjectures commit
@@ -78,39 +77,41 @@ Write the product in Gaussian-integer coordinates:
 P_n = ∏_{k=0}^n (1 + ki) = X_n + iY_n.
 ```
 
-Then `a(n) = Y_n`.  Multiplication by the next factor gives the integer recurrence
+Lean first proves that the original complex product is the image of this Gaussian-integer
+product, so `a(n) = Y_n` exactly. Multiplication by the next factor gives the integer recurrence
 
 ```text
 X_{n+1} = X_n - (n+1)Y_n,
 Y_{n+1} = (n+1)X_n + Y_n.
 ```
 
-This removes complex-number bookkeeping and turns the problem into tracking powers of two in
-two integer sequences.  Grouping the factors into blocks of four (and, for the correction term,
-blocks of eight) leads to the four residue-class formulas displayed above.  Their main term is
-`m` when `n = 4m + r`; the remaining term is at most logarithmic because
+For a four-factor block, the proof extracts one factor of `2` and represents the remaining
+Gaussian integer as `r + 4si`. Adjacent normalized blocks are paired into two polynomial
+superblock families (one for even starts and one for odd starts). Their real and imaginary
+coordinates are odd, while their cross-differences have the divisibility needed for a dyadic
+block induction.
+
+That induction proves that the normalized imaginary coordinate of a nonempty block of length
+`L` has exact 2-adic valuation `ν₂(L)`. Regrouping the original product then yields the four
+residue-class formulas displayed above. Their main term is `m` when `n = 4m + r`; the remaining
+term is at most logarithmic because
 `ν₂(⌈m/2⌉) ≤ log₂(m) + 1`.  Hence
 
 ```text
 ν₂(a(n)) = n/4 + O(log n).
 ```
 
-After dividing by `n` and multiplying by `4`, the error tends to zero, giving the Formal
-Conjectures limit.  The exceptional zero terms `a(0)` and `a(3)` are only finitely many indices
-and therefore do not affect convergence at infinity.  This section is a mathematical roadmap;
-the residue-class identities still need complete Lean proofs before the conjecture is solved.
+Lean bounds the absolute error by `(12 + 4 log₂ n) / n`, proves this bound tends to zero, and
+applies the squeeze theorem. The exceptional zero terms `a(0)` and `a(3)` are outside the
+eventual estimate and therefore do not affect convergence at infinity.
 
-## Intended proof split
+## Proof structure
 
-1. Replace the noncomputable complex product by an integer/Gaussian-integer recurrence and prove
-   that its imaginary coordinate is `OeisA105751.a`.
-2. Formalize the four residue-class valuation formulas above.
-3. Prove that the extra valuation term is `O(log n)` and derive the registered `Tendsto` theorem.
-4. Audit the final theorem with `#print axioms`; only then propose changing this target to
-   `research solved`.
-
-The reported mathematical proof uses four- and eight-factor blocks, a 2-adic cross-difference
-identity, a formal-arctangent product-to-sum transformation, and a complete-residue-system sum.
+1. Identify the complex product with an integer Gaussian product.
+2. Normalize each four-factor block and prove the general dyadic block lemma.
+3. Derive exact valuations in all four residue classes.
+4. Convert `ExactTwo` statements to `padicValInt` equalities.
+5. Bound the asymptotic error and prove the rational-valued `Tendsto` theorem.
 
 ## Files
 
@@ -142,8 +143,14 @@ lake exe cache get
 lake build
 ```
 
-The current checks verify the definitions, the exact target restatement, and the initial sequence
-values.  They do **not** certify the open conjecture.
+Both builds check the completed proof. The final axiom audit reports only Lean/mathlib's standard
+axioms:
+
+```text
+[propext, Classical.choice, Quot.sound]
+```
+
+In particular, the final theorem does not depend on `sorryAx`.
 
 ## Status boundary
 
@@ -171,4 +178,4 @@ repository's scope.
 
 ## AI usage disclosure
 
-This repository scaffold was prepared with assistance from OpenAI Codex.
+This formalization was developed with assistance from OpenAI Codex.
